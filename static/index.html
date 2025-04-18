@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aircraft Search Location Calculator</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://cdn.jsdelivr.net/npm/heatmap.js@2.0.5/build/heatmap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet-heatmap@1.0.0/leaflet-heatmap.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-plane"></i> Aircraft Search Location Calculator</h1>
+            <p class="subtitle">Determine probable crash sites based on last known position and flight parameters</p>
+        </header>
+
+        <div class="main-content">
+            <div class="sidebar">
+                <div class="input-section">
+                    <h2>Aircraft Type</h2>
+                    <select id="aircraft-type">
+                        <option value="cessna172">Small Single-Engine (Cessna 172)</option>
+                        <option value="baron">Twin-Engine Piston (Beechcraft Baron)</option>
+                        <option value="citation">Small Business Jet (Citation CJ3)</option>
+                        <option value="gulfstream">Medium Business Jet (Gulfstream G450)</option>
+                        <option value="embraer">Regional Airliner (Embraer E175)</option>
+                        <option value="boeing737">Narrow-Body Airliner (Boeing 737)</option>
+                        <option value="boeing777">Wide-Body Airliner (Boeing 777)</option>
+                        <option value="helicopter">Helicopter (Bell 206)</option>
+                    </select>
+                </div>
+
+                <div class="input-section">
+                    <h2>Last Known Position</h2>
+                    <div class="input-group">
+                        <label for="latitude">Latitude (degrees)</label>
+                        <input type="number" id="latitude" value="37.7749" step="0.0001" min="-90" max="90">
+                    </div>
+                    <div class="input-group">
+                        <label for="longitude">Longitude (degrees)</label>
+                        <input type="number" id="longitude" value="-122.4194" step="0.0001" min="-180" max="180">
+                    </div>
+                    <div class="input-group">
+                        <label for="altitude">Altitude (feet)</label>
+                        <input type="number" id="altitude" value="30000" step="100" min="0" max="60000">
+                    </div>
+                </div>
+
+                <div class="input-section">
+                    <h2>Flight Parameters</h2>
+                    <div class="input-group">
+                        <label for="ground-speed">Ground Speed (knots)</label>
+                        <input type="number" id="ground-speed" value="450" step="5" min="0" max="1000">
+                    </div>
+                    <div class="input-group">
+                        <label for="heading">Heading (degrees)</label>
+                        <input type="number" id="heading" value="90" step="1" min="0" max="360">
+                    </div>
+                    <div class="input-group">
+                        <label for="vertical-speed">Vertical Speed (feet/min)</label>
+                        <input type="number" id="vertical-speed" value="0" step="100" min="-8000" max="8000">
+                    </div>
+                </div>
+
+                <div class="input-section">
+                    <h2>Environmental Conditions</h2>
+                    <div class="input-group">
+                        <label for="wind-speed">Wind Speed (knots)</label>
+                        <input type="number" id="wind-speed" value="15" step="1" min="0" max="200">
+                    </div>
+                    <div class="input-group">
+                        <label for="wind-direction">Wind Direction (degrees)</label>
+                        <input type="number" id="wind-direction" value="270" step="1" min="0" max="360">
+                    </div>
+                    <div class="input-group">
+                        <label for="visibility">Visibility Conditions</label>
+                        <select id="visibility">
+                            <option value="excellent">Excellent</option>
+                            <option value="good" selected>Good</option>
+                            <option value="moderate">Moderate</option>
+                            <option value="poor">Poor</option>
+                            <option value="very-poor">Very Poor</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="input-section">
+                    <h2>Search Parameters</h2>
+                    <div class="input-group">
+                        <label for="radius-multiplier">Search Radius Factor: <span id="radius-value">2.0</span></label>
+                        <input type="range" id="radius-multiplier" value="2.0" min="1.0" max="5.0" step="0.1">
+                    </div>
+                    <div class="input-group">
+                        <label for="probability-points">Probability Points: <span id="points-value">1000</span></label>
+                        <input type="range" id="probability-points" value="1000" min="100" max="5000" step="100">
+                    </div>
+                </div>
+
+                <button id="calculate-btn" class="primary-btn">Calculate Search Area</button>
+                
+                <div class="aircraft-specs">
+                    <h2>Aircraft Specifications</h2>
+                    <div id="specs-content">
+                        <p><strong>Type:</strong> <span id="spec-type">Small Single-Engine (Cessna 172)</span></p>
+                        <p><strong>Glide Ratio:</strong> <span id="spec-glide">9.0</span></p>
+                        <p><strong>Max Range:</strong> <span id="spec-range">800</span> nm</p>
+                        <p><strong>Cruise Speed:</strong> <span id="spec-speed">122</span> knots</p>
+                        <p><strong>Fuel Endurance:</strong> <span id="spec-fuel">5.0</span> hours</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="content-area">
+                <div id="map-container">
+                    <div id="map"></div>
+                </div>
+                
+                <div class="results-panel" id="results-panel">
+                    <h2>Search Area Information</h2>
+                    <div id="results-content">
+                        <p>Calculate search area to view results</p>
+                    </div>
+                    
+                    <div class="export-options">
+                        <h3>Export Options</h3>
+                        <div class="export-format">
+                            <label for="export-format">Format:</label>
+                            <select id="export-format">
+                                <option value="csv">CSV</option>
+                                <option value="geojson">GeoJSON</option>
+                            </select>
+                        </div>
+                        <button id="export-btn" class="secondary-btn" disabled>Export Search Coordinates</button>
+                    </div>
+                </div>
+                
+                <div class="guide-panel">
+                    <div class="accordion">
+                        <div class="accordion-item">
+                            <h3 class="accordion-header">How to use this tool</h3>
+                            <div class="accordion-content">
+                                <ol>
+                                    <li>Enter the last known aircraft position, flight parameters, and environmental conditions</li>
+                                    <li>Click "Calculate Search Area" to generate the probability map</li>
+                                    <li>The map will show:
+                                        <ul>
+                                            <li>Last known position (blue marker)</li>
+                                            <li>Search radius (blue circle)</li>
+                                            <li>Probability heatmap (red = highest probability)</li>
+                                        </ul>
+                                    </li>
+                                    <li>Export the coordinates for rescue teams using the export options</li>
+                                </ol>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h3 class="accordion-header">Understanding the Results</h3>
+                            <div class="accordion-content">
+                                <ul>
+                                    <li><strong>Search Center:</strong> The estimated central point for the search operation</li>
+                                    <li><strong>Search Radius:</strong> The maximum distance from the center to search</li>
+                                    <li><strong>Probability Heatmap:</strong> Areas with higher probability of finding the aircraft</li>
+                                    <li><strong>Factors affecting accuracy:</strong>
+                                        <ul>
+                                            <li>Quality of last known position data</li>
+                                            <li>Time since last contact</li>
+                                            <li>Weather conditions</li>
+                                            <li>Aircraft condition before loss of contact</li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <div class="footer-content">
+                <p>Emergency Use Tool - Always coordinate with aviation authorities and search & rescue teams.</p>
+            </div>
+        </footer>
+    </div>
+
+    <script src="js/aircraft-data.js"></script>
+    <script src="js/search-algorithms.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

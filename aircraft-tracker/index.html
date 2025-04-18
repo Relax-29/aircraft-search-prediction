@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aircraft Search & Prediction System</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="flex flex-col h-screen">
+        <!-- Header -->
+        <header class="bg-blue-800 text-white shadow-md">
+            <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-plane text-2xl"></i>
+                    <div>
+                        <h1 class="text-xl font-bold">Aircraft Search & Prediction System</h1>
+                        <p class="text-sm text-blue-200">Real-time tracking and emergency landing prediction</p>
+                    </div>
+                </div>
+                <div class="flex space-x-4">
+                    <button id="live-tracking-btn" class="bg-green-600 hover:bg-green-700 px-3 py-1 rounded text-sm flex items-center">
+                        <span id="connection-status" class="inline-block w-2 h-2 rounded-full bg-red-500 mr-2"></span>
+                        Live Tracking
+                    </button>
+                    <button id="help-btn" class="bg-blue-700 hover:bg-blue-600 px-3 py-1 rounded text-sm">
+                        <i class="fas fa-question-circle mr-1"></i> Help
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="flex flex-1 overflow-hidden">
+            <!-- Left Sidebar - Control Panel -->
+            <aside class="w-80 bg-white shadow-md overflow-y-auto flex-shrink-0">
+                <div class="p-4">
+                    <h2 class="text-lg font-semibold mb-4 border-b pb-2">Search Parameters</h2>
+                    
+                    <!-- Search Filters -->
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Search Type</label>
+                            <select id="search-type" class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="callsign">Call Sign</option>
+                                <option value="icao24">ICAO24 Address</option>
+                                <option value="country">Origin Country</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Search Value</label>
+                            <input type="text" id="search-value" class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                   placeholder="Enter value to search">
+                        </div>
+                        
+                        <button id="search-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded w-full">
+                            Search Aircraft
+                        </button>
+                    </div>
+                    
+                    <div class="my-6 border-t border-b py-4">
+                        <h3 class="text-md font-semibold mb-3">Glide Prediction Settings</h3>
+                        
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Aircraft Type</label>
+                                <select id="aircraft-type" class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="small-single">Small Single-Engine (Glide Ratio: 9:1)</option>
+                                    <option value="twin-engine">Twin-Engine Piston (Glide Ratio: 10:1)</option>
+                                    <option value="small-jet">Small Business Jet (Glide Ratio: 15:1)</option>
+                                    <option value="medium-jet">Medium Business Jet (Glide Ratio: 17:1)</option>
+                                    <option value="regional">Regional Airliner (Glide Ratio: 18:1)</option>
+                                    <option value="narrow-body" selected>Narrow-Body Airliner (Glide Ratio: 17:1)</option>
+                                    <option value="wide-body">Wide-Body Airliner (Glide Ratio: 19:1)</option>
+                                    <option value="helicopter">Helicopter (Glide Ratio: 4:1)</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Wind Speed (knots)</label>
+                                <input type="number" id="wind-speed" class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                       value="15" min="0" max="200">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Wind Direction (degrees)</label>
+                                <input type="number" id="wind-direction" class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                       value="270" min="0" max="360">
+                            </div>
+                            
+                            <div class="pt-2">
+                                <button id="calculate-glide-btn" class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded w-full">
+                                    Calculate Emergency Landing Zone
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+            
+            <!-- Map Container -->
+            <div id="map-container" class="flex-1">
+                <div id="map" class="h-full w-full"></div>
+            </div>
+            
+            <!-- Right Sidebar - Flight Information -->
+            <aside id="flight-info-panel" class="w-96 bg-white shadow-md overflow-y-auto flex-shrink-0 transform translate-x-full transition-transform duration-300 ease-in-out">
+                <div class="p-4">
+                    <div class="flex justify-between items-center border-b pb-2 mb-4">
+                        <h2 class="text-lg font-semibold">Flight Information</h2>
+                        <button id="close-info-panel" class="text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    
+                    <div id="flight-info-content" class="space-y-4">
+                        <div class="bg-gray-100 p-3 rounded">
+                            <h3 id="flight-callsign" class="text-xl font-bold">Loading...</h3>
+                            <p id="flight-aircraft" class="text-sm text-gray-600">Aircraft information</p>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="bg-gray-100 p-3 rounded">
+                                <p class="text-xs text-gray-500">Altitude</p>
+                                <p id="flight-altitude" class="text-lg font-semibold">--</p>
+                            </div>
+                            <div class="bg-gray-100 p-3 rounded">
+                                <p class="text-xs text-gray-500">Ground Speed</p>
+                                <p id="flight-speed" class="text-lg font-semibold">--</p>
+                            </div>
+                            <div class="bg-gray-100 p-3 rounded">
+                                <p class="text-xs text-gray-500">Heading</p>
+                                <p id="flight-heading" class="text-lg font-semibold">--</p>
+                            </div>
+                            <div class="bg-gray-100 p-3 rounded">
+                                <p class="text-xs text-gray-500">Vertical Rate</p>
+                                <p id="flight-vertical-rate" class="text-lg font-semibold">--</p>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-gray-100 p-3 rounded">
+                            <p class="text-xs text-gray-500">Position</p>
+                            <p id="flight-position" class="text-md font-mono">--</p>
+                        </div>
+                        
+                        <div id="prediction-info" class="hidden">
+                            <h3 class="text-md font-semibold border-t pt-2 mt-2">Emergency Landing Prediction</h3>
+                            <div class="bg-amber-100 p-3 rounded mt-2">
+                                <p class="text-xs text-amber-800">Glide Distance</p>
+                                <p id="glide-distance" class="text-lg font-semibold">--</p>
+                            </div>
+                            <div class="bg-amber-100 p-3 rounded mt-2">
+                                <p class="text-xs text-amber-800">Predicted Landing Coordinates</p>
+                                <p id="landing-coordinates" class="text-md font-mono">--</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </main>
+        
+        <!-- Footer -->
+        <footer class="bg-gray-800 text-white text-sm py-2">
+            <div class="container mx-auto px-4 flex justify-between items-center">
+                <p>Aircraft Search & Prediction System</p>
+                <p>Data Source: OpenSky Network API</p>
+            </div>
+        </footer>
+    </div>
+    
+    <!-- Modal for Help -->
+    <div id="help-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg w-full max-w-2xl max-h-[80vh] overflow-y-auto">
+            <div class="p-6">
+                <div class="flex justify-between items-center border-b pb-3 mb-4">
+                    <h2 class="text-xl font-bold">How to Use This Application</h2>
+                    <button id="close-help-modal" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="space-y-4">
+                    <div>
+                        <h3 class="text-lg font-semibold">Live Aircraft Tracking</h3>
+                        <p class="text-gray-700">The application connects to the OpenSky Network API to display live aircraft positions around the world.</p>
+                        <ol class="list-decimal pl-6 mt-2 space-y-1">
+                            <li>Click the "Live Tracking" button to connect to the API and display aircraft.</li>
+                            <li>Zoom and pan the map to see aircraft in different regions.</li>
+                            <li>Click on any aircraft icon to view detailed information.</li>
+                        </ol>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-lg font-semibold">Searching for Aircraft</h3>
+                        <p class="text-gray-700">You can search for specific aircraft using different parameters:</p>
+                        <ul class="list-disc pl-6 mt-2 space-y-1">
+                            <li><strong>Call Sign:</strong> The flight identifier (e.g., "UAL123")</li>
+                            <li><strong>ICAO24 Address:</strong> The unique hexadecimal identifier (e.g., "a808c5")</li>
+                            <li><strong>Origin Country:</strong> The country where the aircraft is registered (e.g., "United States")</li>
+                        </ul>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-lg font-semibold">Emergency Landing Prediction</h3>
+                        <p class="text-gray-700">This feature calculates where an aircraft might land in case of an emergency:</p>
+                        <ol class="list-decimal pl-6 mt-2 space-y-1">
+                            <li>Select an aircraft by clicking on its icon.</li>
+                            <li>Choose the appropriate aircraft type from the dropdown menu.</li>
+                            <li>Enter current wind conditions if known.</li>
+                            <li>Click "Calculate Emergency Landing Zone" to see the prediction.</li>
+                        </ol>
+                        <p class="text-gray-700 mt-2">The calculation uses the glide ratio formula: <strong>Glide Distance = Altitude × Glide Ratio</strong></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="js/aircraft-data.js"></script>
+    <script src="js/glide-prediction.js"></script>
+    <script src="js/map-controls.js"></script>
+    <script src="js/app.js"></script>
+    
+    <!-- Initialize the app -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Make sure DOM is fully loaded before we access elements
+            // This is important especially in iframes
+            setTimeout(function() {
+                try {
+                    console.log("Initializing aircraft tracker app...");
+                    if (typeof initApp === 'function') {
+                        initApp();
+                        console.log("App initialized successfully");
+                    } else {
+                        console.error("initApp function not found");
+                    }
+                } catch (error) {
+                    console.error("Error initializing app:", error);
+                }
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
