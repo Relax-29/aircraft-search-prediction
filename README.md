@@ -38,7 +38,7 @@ A comprehensive aircraft tracking and emergency landing prediction system that i
 
 1. Clone the repository:
    ```
-   git clone https://github.com/Relex-29/aircraft-search-prediction.git
+   git clone https://github.com/Relax-29/aircraft-search-prediction.git
    cd aircraft-search-prediction
    ```
 
