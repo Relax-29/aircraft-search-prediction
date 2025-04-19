@@ -38,7 +38,7 @@ A comprehensive aircraft tracking and emergency landing prediction system that i
 
 1. Clone the repository:
    ```
-   git clone https://github.com/yourusername/aircraft-search-prediction.git
+   git clone https://github.com/Relex-29/aircraft-search-prediction.git
    cd aircraft-search-prediction
    ```
 
@@ -80,4 +80,7 @@ This project is available under the MIT License. See LICENSE file for details.
 
 ## Contributors
 
-- Your Name Here
+- Mohit Kumar
+- Lakshay Sharma
+- Dev Sahu
+- Shivi
